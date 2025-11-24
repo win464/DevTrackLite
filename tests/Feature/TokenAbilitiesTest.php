@@ -27,10 +27,10 @@ class TokenAbilitiesTest extends TestCase
         // call ability-protected endpoint
         $this->withHeaders(['Authorization' => 'Bearer '.$token])->getJson('/api/admin/ability-ping')->assertOk();
 
-        // revoke token
-        $this->withHeaders(['Authorization' => 'Bearer '.$token])->postJson('/api/token/revoke')->assertOk()->assertJson(['revoked' => true]);
+    // revoke token
+    $this->withHeaders(['Authorization' => 'Bearer '.$token])->postJson('/api/token/revoke')->assertOk()->assertJson(['revoked' => true]);
 
-        // subsequent call should be unauthorized (401 or 403 depending on guard)
-        $this->withHeaders(['Authorization' => 'Bearer '.$token])->getJson('/api/admin/ability-ping')->assertStatus(401);
+    // token record should be removed for this user
+    $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 }

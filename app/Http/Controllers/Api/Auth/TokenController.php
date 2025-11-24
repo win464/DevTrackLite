@@ -50,11 +50,13 @@ class TokenController extends Controller
             try {
                 if ($id) {
                     \Laravel\Sanctum\PersonalAccessToken::where('id', $id)->delete();
+                    \Laravel\Sanctum\PersonalAccessToken::where('id', $id)->update(['expires_at' => now()->subMinute()]);
                 }
 
                 if ($plain) {
                     $hash = hash('sha256', $plain);
                     \Laravel\Sanctum\PersonalAccessToken::where('token', $hash)->delete();
+                    \Laravel\Sanctum\PersonalAccessToken::where('token', $hash)->update(['expires_at' => now()->subMinute()]);
                 }
             } catch (\Throwable $e) {
                 // ignore and fall back below
