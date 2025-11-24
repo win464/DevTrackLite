@@ -28,11 +28,16 @@ class TokenController extends Controller
             ]);
         }
 
-    $abilities = $data['abilities'] ?? ['*'];
+        // If abilities were provided, use them. Otherwise use role→abilities mapping.
+        if (! empty($data['abilities'])) {
+            $abilities = $data['abilities'];
+        } else {
+            $abilities = config('roles.' . ($user->role ?? 'viewer'), ['*']);
+        }
 
-    $token = $user->createToken($data['device_name'] ?? 'api-token', $abilities)->plainTextToken;
+        $token = $user->createToken($data['device_name'] ?? 'api-token', $abilities)->plainTextToken;
 
-    return response()->json([ 'token' => $token, 'token_type' => 'Bearer', 'abilities' => $abilities ]);
+        return response()->json([ 'token' => $token, 'token_type' => 'Bearer', 'abilities' => $abilities ]);
     }
 
     public function revoke(Request $request)

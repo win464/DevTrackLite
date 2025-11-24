@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class EnsureTokenHasAbility
 {
@@ -17,13 +18,20 @@ class EnsureTokenHasAbility
             return $next($request);
         }
 
-        $user = $request->user();
+        $bearer = $request->bearerToken();
 
-        if (! $user || ! $request->bearerToken()) {
+        if (! $bearer) {
             abort(401, 'Unauthenticated.');
         }
 
-        if (! $user->tokenCan($ability)) {
+        // Resolve the personal access token from the bearer token and check abilities directly.
+        $pat = PersonalAccessToken::findToken($bearer);
+
+        if (! $pat) {
+            abort(401, 'Invalid token.');
+        }
+
+        if (! $pat->can($ability)) {
             abort(403, 'Token missing ability.');
         }
 
