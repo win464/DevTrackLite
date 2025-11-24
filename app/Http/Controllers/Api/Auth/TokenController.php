@@ -42,16 +42,22 @@ class TokenController extends Controller
 
         $bearer = $request->bearerToken();
 
-        if ($bearer) {
-            // plainTextToken format: {id}|{random}
-            [$id] = explode('|', $bearer, 2) + [null];
 
-            if ($id) {
-                try {
-                    \Laravel\Sanctum\PersonalAccessToken::find($id)?->delete();
-                } catch (\Throwable $e) {
-                    // ignore errors here — we'll fall back to deleting all tokens
+        if ($bearer) {
+            // plainTextToken format: {id}|{plain}
+            [$id, $plain] = explode('|', $bearer, 2) + [null, null];
+
+            try {
+                if ($id) {
+                    \Laravel\Sanctum\PersonalAccessToken::where('id', $id)->delete();
                 }
+
+                if ($plain) {
+                    $hash = hash('sha256', $plain);
+                    \Laravel\Sanctum\PersonalAccessToken::where('token', $hash)->delete();
+                }
+            } catch (\Throwable $e) {
+                // ignore and fall back below
             }
         }
 
