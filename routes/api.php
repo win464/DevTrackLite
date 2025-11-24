@@ -36,6 +36,15 @@ Route::middleware(['auth:sanctum', 'App\\Http\\Middleware\\EnsureUserHasRole:adm
         return response()->json(['admin' => $request->user()->email]);
     });
 
+    // Ability-protected endpoint for token ability testing
+    Route::get('/ability-ping', function (Request $request) {
+        if (! $request->user()->tokenCan('admin:ping')) {
+            abort(403, 'Token missing ability.');
+        }
+
+        return response()->json(['ok' => true]);
+    });
+
     // Place admin API resources here, e.g. ProjectController, MilestoneController
     // Route::apiResource('projects', App\Http\Controllers\Api\Admin\ProjectController::class);
 });

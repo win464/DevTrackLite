@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\User;
+use App\Enums\UserRole;
 
 class TokenIssuanceTest extends TestCase
 {
@@ -15,7 +16,7 @@ class TokenIssuanceTest extends TestCase
         // create an admin user with known credentials
         $user = User::factory()->create([
             'email' => 'admin@example.test',
-            'role' => 'admin',
+            'role' => UserRole::ADMIN->value,
             'password' => bcrypt('password'),
         ]);
 

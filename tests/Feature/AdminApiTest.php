@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\User;
+use App\Enums\UserRole;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -20,7 +21,7 @@ class AdminApiTest extends TestCase
 
     public function test_non_admin_is_forbidden()
     {
-        $user = User::factory()->create(['role' => 'viewer']);
+    $user = User::factory()->create(['role' => UserRole::VIEWER->value]);
 
         Sanctum::actingAs($user);
 
@@ -31,7 +32,7 @@ class AdminApiTest extends TestCase
 
     public function test_admin_can_access_ping()
     {
-        $user = User::factory()->create(['role' => 'admin']);
+    $user = User::factory()->create(['role' => UserRole::ADMIN->value]);
 
         Sanctum::actingAs($user);
 

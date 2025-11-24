@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Enums\UserRole;
 
 class User extends Authenticatable
 {
@@ -53,12 +54,14 @@ class User extends Authenticatable
      */
     public function hasRole(string|array $roles): bool
     {
-        $current = $this->role ?? 'viewer';
+        $current = $this->role ? UserRole::from($this->role) : UserRole::VIEWER;
 
         if (is_string($roles)) {
             $roles = preg_split('/[|,]/', $roles, flags: PREG_SPLIT_NO_EMPTY);
         }
 
-        return in_array($current, (array) $roles, true);
+        $allowed = array_map(fn($r) => is_string($r) ? UserRole::from($r) : $r, (array) $roles);
+
+        return in_array($current, $allowed, true);
     }
 }
