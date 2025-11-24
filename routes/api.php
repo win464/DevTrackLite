@@ -19,9 +19,10 @@ Route::get('/status', function () {
 });
 
 // Public read-only endpoints (examples)
-Route::get('/projects', function () {
-    return response()->json(['data' => []]);
-});
+use App\Http\Controllers\Api\Admin\ProjectController;
+
+// Public projects index
+Route::get('/projects', [ProjectController::class, 'index']);
 
 // Public auth endpoints (issue/revoke tokens)
 use App\Http\Controllers\Api\Auth\TokenController;
@@ -42,5 +43,5 @@ Route::middleware(['auth:sanctum', 'App\\Http\\Middleware\\EnsureUserHasRole:adm
     })->middleware('ability:admin:ping');
 
     // Place admin API resources here, e.g. ProjectController, MilestoneController
-    // Route::apiResource('projects', App\Http\Controllers\Api\Admin\ProjectController::class);
+    Route::apiResource('projects', App\Http\Controllers\Api\Admin\ProjectController::class);
 });
