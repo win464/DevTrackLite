@@ -13,7 +13,9 @@ return new class extends Migration
             $table->string('title');
             $table->text('description')->nullable();
             $table->foreignId('owner_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('status')->default('open');
+                $table->string('status')->nullable();
+                $table->decimal('budget', 12, 2)->nullable();
+                $table->decimal('spent', 12, 2)->nullable();
             $table->timestamps();
         });
     }
