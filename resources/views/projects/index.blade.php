@@ -7,25 +7,31 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="mb-8 flex justify-between items-center">
-                <h1 class="text-3xl font-bold">My Projects</h1>
-                <a href="{{ route('projects.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            <div class="mb-6 flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">My Projects</h2>
+                    <p class="text-sm text-gray-600 mt-1">Manage your projects and track progress</p>
+                </div>
+                <a href="{{ route('projects.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     + New Project
                 </a>
             </div>
 
 @if ($projects->isEmpty())
-    <p class="text-gray-500">No projects yet. <a href="{{ route('projects.create') }}" class="text-blue-600 hover:underline">Create one</a></p>
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+        <p class="text-gray-500">No projects yet. <a href="{{ route('projects.create') }}" class="text-indigo-600 hover:text-indigo-900 font-medium">Create your first project</a> to get started.</p>
+    </div>
 @else
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach ($projects as $project)
-            <a href="{{ route('projects.show', $project) }}" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+            <a href="{{ route('projects.show', $project) }}" class="block bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition-shadow duration-200">
+                <div class="p-6">
                 <div class="flex justify-between items-start mb-4">
                     <div>
                         <h3 class="text-lg font-bold text-gray-900">{{ $project->title }}</h3>
                         <p class="text-sm text-gray-600 mt-1">{{ $project->description ?? 'No description' }}</p>
                     </div>
-                    <span class="px-2 py-1 text-xs font-semibold rounded-full
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                         @if ($project->status === 'active') bg-green-100 text-green-800
                         @elseif ($project->status === 'closed') bg-gray-100 text-gray-800
                         @else bg-yellow-100 text-yellow-800
@@ -35,33 +41,36 @@
                 </div>
 
                 <div class="mb-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm font-semibold text-gray-700">Progress</span>
-                        <span class="text-sm font-bold text-blue-600">{{ $project->progress ?? 0 }}%</span>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="text-xs font-medium text-gray-500">Progress</span>
+                        <span class="text-xs font-semibold text-indigo-600">{{ $project->progress ?? 0 }}%</span>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ $project->progress ?? 0 }}%"></div>
+                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                        <div class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: {{ $project->progress ?? 0 }}%"></div>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-1.5 min-h-[24px]">
                     @if ($project->overdue)
-                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded">⚠️ Overdue</span>
+                        <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded">⚠️ Overdue</span>
                     @endif
                     @if ($project->over_budget)
-                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-orange-100 text-orange-800 rounded">💰 Over Budget</span>
+                        <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800 rounded">💰 Over Budget</span>
                     @endif
                 </div>
 
-                <div class="mt-4 text-sm text-gray-500 flex justify-between">
-                    <span>{{ $project->milestones_count ?? 0 }} milestones</span>
-                    <span class="text-xs">{{ $project->created_at->format('M d, Y') }}</span>
+                <div class="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500 flex justify-between">
+                    <span class="font-medium">{{ $project->milestones_count ?? 0 }} milestone{{ $project->milestones_count !== 1 ? 's' : '' }}</span>
+                    <span>{{ $project->created_at->format('M d, Y') }}</span>
+                </div>
                 </div>
             </a>
         @endforeach
     </div>
 
-    {{ $projects->links() }}
+    <div class="mt-6">
+        {{ $projects->links() }}
+    </div>
 @endif
         </div>
     </div>
