@@ -10,11 +10,17 @@ use Illuminate\Http\JsonResponse;
 
 class ProjectController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-    $projects = Project::latest()->paginate(15);
+        // per_page query param with validation and capping
+        $perPage = (int) $request->query('per_page', 15);
 
-    return ProjectResource::collection($projects)->response()->setStatusCode(200);
+        // enforce sensible bounds: at least 1, at most 100
+        $perPage = max(1, min($perPage, 100));
+
+        $projects = Project::latest()->paginate($perPage);
+
+        return ProjectResource::collection($projects)->response()->setStatusCode(200);
     }
 
     public function show(Project $project): JsonResponse

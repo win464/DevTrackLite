@@ -24,6 +24,16 @@ use App\Http\Controllers\Api\Admin\ProjectController;
 // Public projects index
 Route::get('/projects', [ProjectController::class, 'index']);
 
+// Authenticated project actions for owners (create/update/delete) using policy
+Route::middleware('auth:sanctum')->group(function () {
+    // Any authenticated user can create a project (policy enforces this in controller if desired)
+    Route::post('/projects', [ProjectController::class, 'store']);
+
+    // Owners (or admins) can update/delete their projects — enforced via policy middleware
+    Route::patch('/projects/{project}', [ProjectController::class, 'update'])->middleware('can:update,project');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->middleware('can:delete,project');
+});
+
 // Public auth endpoints (issue/revoke tokens)
 use App\Http\Controllers\Api\Auth\TokenController;
 

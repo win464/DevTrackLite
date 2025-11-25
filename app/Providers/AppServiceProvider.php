@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Gate;
+use App\Models\Project;
+use App\Policies\ProjectPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,5 +28,9 @@ class AppServiceProvider extends ServiceProvider
         // register aliases used in routes
         $router->aliasMiddleware('ability', \App\Http\Middleware\EnsureTokenHasAbility::class);
         $router->aliasMiddleware('role', \App\Http\Middleware\EnsureUserHasRole::class);
+
+        // Register model policies (ProjectPolicy) here so the policy is available
+        // without needing a dedicated AuthServiceProvider file in this app layout.
+        Gate::policy(Project::class, ProjectPolicy::class);
     }
 }

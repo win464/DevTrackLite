@@ -50,4 +50,24 @@ class ProjectsTest extends TestCase
         $resp = $this->postJson('/api/admin/projects', ['title' => 'X']);
         $resp->assertStatus(403);
     }
+
+    public function test_projects_index_respects_per_page_and_caps()
+    {
+        // create more than the cap so we can test capping behavior
+        Project::factory()->count(120)->create();
+
+        // request small page size
+        $respSmall = $this->getJson('/api/projects?per_page=5');
+        $respSmall->assertOk();
+        $this->assertCount(5, $respSmall->json('data'));
+        $this->assertEquals(5, $respSmall->json('meta.per_page'));
+
+        // request an excessively large page size; controller should cap at 100
+        $respLarge = $this->getJson('/api/projects?per_page=999');
+        $respLarge->assertOk();
+        // meta.per_page should be capped to 100
+        $this->assertEquals(100, $respLarge->json('meta.per_page'));
+        // since we created 120, the first page should contain 100 items
+        $this->assertCount(100, $respLarge->json('data'));
+    }
 }
