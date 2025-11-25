@@ -18,28 +18,17 @@ Route::get('/status', function () {
     return response()->json(['status' => 'ok']);
 });
 
-// Public read-only endpoints (examples)
+// Public read-only endpoints
 use App\Http\Controllers\Api\Admin\ProjectController;
-
-// Public projects index
-Route::get('/projects', [ProjectController::class, 'index']);
-
-// milestones public listing
 use App\Http\Controllers\Api\MilestoneController;
-Route::get('/projects/{project}/milestones', [MilestoneController::class, 'index']);
 
-// Public project detail
-Route::get('/projects/{project}', [App\Http\Controllers\Api\Admin\ProjectController::class, 'show']);
+// Public projects & milestones endpoints
+Route::get('/public/projects', [ProjectController::class, 'index'])->name('api.projects.index');
+Route::get('/public/projects/{project}', [ProjectController::class, 'show'])->name('api.projects.show');
+Route::get('/public/projects/{project}/milestones', [MilestoneController::class, 'index'])->name('api.milestones.index');
 
-// Authenticated project actions for owners (create/update/delete) using policy
+// Authenticated project/milestone actions for owners (using policy)
 Route::middleware('auth:sanctum')->group(function () {
-    // Any authenticated user can create a project (policy enforces this in controller if desired)
-    Route::post('/projects', [ProjectController::class, 'store']);
-
-    // Owners (or admins) can update/delete their projects — enforced via policy middleware
-    Route::patch('/projects/{project}', [ProjectController::class, 'update'])->middleware('can:update,project');
-    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->middleware('can:delete,project');
-
     // Milestone write endpoints (owners or admins)
     Route::post('/projects/{project}/milestones', [MilestoneController::class, 'store']);
     Route::patch('/milestones/{milestone}', [MilestoneController::class, 'update'])->middleware('can:update,milestone');
@@ -65,5 +54,11 @@ Route::middleware(['auth:sanctum', 'App\\Http\\Middleware\\EnsureUserHasRole:adm
     })->middleware('ability:admin:ping');
 
     // Place admin API resources here, e.g. ProjectController, MilestoneController
-    Route::apiResource('projects', App\Http\Controllers\Api\Admin\ProjectController::class);
+    Route::apiResource('projects', App\Http\Controllers\Api\Admin\ProjectController::class)->names([
+        'index' => 'api.admin.projects.index',
+        'store' => 'api.admin.projects.store',
+        'show' => 'api.admin.projects.show',
+        'update' => 'api.admin.projects.update',
+        'destroy' => 'api.admin.projects.destroy',
+    ]);
 });

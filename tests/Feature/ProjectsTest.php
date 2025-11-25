@@ -16,7 +16,7 @@ class ProjectsTest extends TestCase
     {
         Project::factory()->count(2)->create();
 
-        $resp = $this->getJson('/api/projects');
+        $resp = $this->getJson('/api/public/projects');
 
         $resp->assertOk()->assertJsonStructure([
             'data',
@@ -57,13 +57,13 @@ class ProjectsTest extends TestCase
         Project::factory()->count(120)->create();
 
         // request small page size
-        $respSmall = $this->getJson('/api/projects?per_page=5');
+        $respSmall = $this->getJson('/api/public/projects?per_page=5');
         $respSmall->assertOk();
         $this->assertCount(5, $respSmall->json('data'));
         $this->assertEquals(5, $respSmall->json('meta.per_page'));
 
         // request an excessively large page size; controller should cap at 100
-        $respLarge = $this->getJson('/api/projects?per_page=999');
+        $respLarge = $this->getJson('/api/public/projects?per_page=999');
         $respLarge->assertOk();
         // meta.per_page should be capped to 100
         $this->assertEquals(100, $respLarge->json('meta.per_page'));

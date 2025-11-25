@@ -18,7 +18,7 @@ class MilestonesTest extends TestCase
         $project = Project::factory()->create();
         Milestone::factory()->count(30)->create(['project_id' => $project->id]);
 
-        $resp = $this->getJson("/api/projects/{$project->id}/milestones?per_page=10");
+        $resp = $this->getJson("/api/public/projects/{$project->id}/milestones?per_page=10");
         $resp->assertOk()->assertJsonStructure(['data','links','meta']);
         $this->assertCount(10, $resp->json('data'));
     }
@@ -70,7 +70,7 @@ class MilestonesTest extends TestCase
         Milestone::factory()->create(['project_id' => $project->id, 'status' => 'completed']);
         Milestone::factory()->create(['project_id' => $project->id, 'status' => 'pending', 'deadline' => now()->subDays(2)->toDateString()]);
 
-        $resp = $this->getJson("/api/projects/{$project->id}");
+        $resp = $this->getJson("/api/public/projects/{$project->id}");
         $resp->assertOk();
 
         $this->assertEquals(66, $resp->json('data.progress'));
