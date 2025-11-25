@@ -46,7 +46,7 @@ class MilestoneController extends Controller
 
     public function update(Milestone $milestone, Request $request): JsonResponse
     {
-        $this->authorize('update', $milestone->project);
+        $this->authorize('update', $milestone);
 
         $data = $request->validate([
             'title' => 'sometimes|required|string|max:255',
@@ -64,7 +64,7 @@ class MilestoneController extends Controller
 
     public function destroy(Milestone $milestone): JsonResponse
     {
-        $this->authorize('delete', $milestone->project);
+        $this->authorize('delete', $milestone);
 
         $milestone->delete();
 

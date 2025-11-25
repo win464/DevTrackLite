@@ -42,8 +42,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Milestone write endpoints (owners or admins)
     Route::post('/projects/{project}/milestones', [MilestoneController::class, 'store']);
-    Route::patch('/milestones/{milestone}', [MilestoneController::class, 'update'])->middleware('can:update,project');
-    Route::delete('/milestones/{milestone}', [MilestoneController::class, 'destroy'])->middleware('can:delete,project');
+    Route::patch('/milestones/{milestone}', [MilestoneController::class, 'update'])->middleware('can:update,milestone');
+    Route::delete('/milestones/{milestone}', [MilestoneController::class, 'destroy'])->middleware('can:delete,milestone');
 });
 
 // Public auth endpoints (issue/revoke tokens)

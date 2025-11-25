@@ -25,7 +25,10 @@ class ProjectController extends Controller
 
     public function show(Project $project): JsonResponse
     {
-        return response()->json(new ProjectResource($project));
+        // Eager-load milestones so computed attributes (progress, overdue, over_budget) work correctly
+        $project->load('milestones');
+
+        return (new ProjectResource($project))->response();
     }
 
     public function store(Request $request): JsonResponse

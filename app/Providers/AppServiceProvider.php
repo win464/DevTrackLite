@@ -5,7 +5,9 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use App\Models\Project;
+use App\Models\Milestone;
 use App\Policies\ProjectPolicy;
+use App\Policies\MilestonePolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,8 +31,9 @@ class AppServiceProvider extends ServiceProvider
         $router->aliasMiddleware('ability', \App\Http\Middleware\EnsureTokenHasAbility::class);
         $router->aliasMiddleware('role', \App\Http\Middleware\EnsureUserHasRole::class);
 
-        // Register model policies (ProjectPolicy) here so the policy is available
+        // Register model policies (ProjectPolicy, MilestonePolicy) here so policies are available
         // without needing a dedicated AuthServiceProvider file in this app layout.
         Gate::policy(Project::class, ProjectPolicy::class);
+        Gate::policy(Milestone::class, MilestonePolicy::class);
     }
 }
