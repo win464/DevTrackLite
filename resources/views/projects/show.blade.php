@@ -80,16 +80,16 @@
 @if ($project->start_date || $project->end_date)
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 p-6">
     <h3 class="text-sm font-semibold text-gray-600 mb-3">Project Timeline</h3>
-    <div class="flex flex-wrap gap-10">
+    <div class="flex flex-col gap-4">
         @if ($project->start_date)
-            <div>
-                <p class="text-xs text-gray-500 mb-1">Start Date</p>
+            <div class="flex flex-col gap-1">
+                <p class="text-xs text-gray-500">Start Date</p>
                 <p class="text-lg font-semibold text-gray-900">{{ \Carbon\Carbon::parse($project->start_date)->format('M d, Y') }}</p>
             </div>
         @endif
         @if ($project->end_date)
-            <div>
-                <p class="text-xs text-gray-500 mb-1">End Date</p>
+            <div class="flex flex-col gap-1">
+                <p class="text-xs text-gray-500">End Date</p>
                 <p class="text-lg font-semibold text-gray-900">{{ \Carbon\Carbon::parse($project->end_date)->format('M d, Y') }}</p>
             </div>
         @endif
