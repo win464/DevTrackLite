@@ -54,7 +54,7 @@
             </div>
 
             <div>
-                <label for="budget" class="block text-sm font-semibold text-gray-700 mb-2">Budget</label>
+                <label for="budget" class="block text-sm font-semibold text-gray-700 mb-2">Budget (GHS)</label>
                 <input
                     type="number"
                     id="budget"
@@ -68,8 +68,32 @@
             </div>
         </div>
 
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <div>
+                <label for="start_date" class="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                <input
+                    type="date"
+                    id="start_date"
+                    name="start_date"
+                    value="{{ old('start_date', $project->start_date ?? '') }}"
+                    class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+            </div>
+
+            <div>
+                <label for="end_date" class="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
+                <input
+                    type="date"
+                    id="end_date"
+                    name="end_date"
+                    value="{{ old('end_date', $project->end_date ?? '') }}"
+                    class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+            </div>
+        </div>
+
         <div class="flex gap-4">
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+            <button type="submit" style="background-color: #2563eb !important; color: white !important;" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold">
                 {{ isset($project) ? 'Update' : 'Create' }} Project
             </button>
             <a href="{{ isset($project) ? route('projects.show', $project) : route('projects.index') }}" class="text-gray-600 hover:text-gray-900 px-6 py-2">

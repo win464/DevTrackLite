@@ -27,6 +27,11 @@ Route::middleware('auth')->group(function () {
         'update' => 'projects.update',
         'destroy' => 'projects.destroy',
     ]);
+    
+    // Milestones web routes (nested under projects)
+    Route::post('projects/{project}/milestones', [App\Http\Controllers\Web\MilestoneController::class, 'store'])->name('projects.milestones.store');
+    Route::put('projects/{project}/milestones/{milestone}', [App\Http\Controllers\Web\MilestoneController::class, 'update'])->name('projects.milestones.update');
+    Route::delete('projects/{project}/milestones/{milestone}', [App\Http\Controllers\Web\MilestoneController::class, 'destroy'])->name('projects.milestones.destroy');
 });
 
 require __DIR__.'/auth.php';

@@ -7,27 +7,43 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-<div class="mb-8 flex justify-between items-center">
-    <div>
-        <h1 class="text-3xl font-bold">{{ $project->title }}</h1>
-        <p class="text-gray-600 mt-2">{{ $project->description }}</p>
+@if (session('success'))
+    <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+        <span class="block sm:inline">{{ session('success') }}</span>
     </div>
-    @if (auth()->user()->id === $project->owner_id || auth()->user()->role === 'admin')
-        <div class="flex gap-2">
-            <a href="{{ route('projects.edit', $project) }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                Edit
-            </a>
-            <form method="POST" action="{{ route('projects.destroy', $project) }}" class="inline" onsubmit="return confirm('Delete this project?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Delete</button>
-            </form>
+@endif
+
+@if (session('error'))
+    <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <span class="block sm:inline">{{ session('error') }}</span>
+    </div>
+@endif
+
+<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+    <div class="p-6">
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <h1 class="text-2xl font-bold text-gray-900">{{ $project->title }}</h1>
+                <p class="text-gray-600 mt-2">{{ $project->description }}</p>
+            </div>
+            @if (auth()->user()->id === $project->owner_id || auth()->user()->role === 'admin')
+                <div class="flex gap-3 ml-4 items-center">
+                    <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md font-semibold text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition">
+                        Edit Project
+                    </a>
+                    <form method="POST" action="{{ route('projects.destroy', $project) }}" class="inline" onsubmit="return confirm('Delete this project and all its milestones?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex items-center px-3 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-sm text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition">Delete</button>
+                    </form>
+                </div>
+            @endif
         </div>
-    @endif
+    </div>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow p-6">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
         <h3 class="text-sm font-semibold text-gray-600 mb-2">Progress</h3>
         <p class="text-3xl font-bold text-blue-600">{{ $project->progress ?? 0 }}%</p>
         <div class="w-full bg-gray-200 rounded-full h-2 mt-4">
@@ -35,7 +51,7 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-6">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
         <h3 class="text-sm font-semibold text-gray-600 mb-2">Status</h3>
         <span class="text-lg font-bold inline-block px-3 py-1 rounded-full
             @if ($project->status === 'active') bg-green-100 text-green-800
@@ -53,59 +69,103 @@
     </div>
 
     @if ($project->budget)
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
             <h3 class="text-sm font-semibold text-gray-600 mb-2">Budget</h3>
-            <p class="text-3xl font-bold text-gray-900">${{ number_format($project->budget, 2) }}</p>
-            <p class="text-sm text-gray-600 mt-2">Spent: ${{ number_format($project->milestones->sum('spent') ?? 0, 2) }}</p>
+            <p class="text-3xl font-bold text-gray-900">GHS {{ number_format($project->budget, 2) }}</p>
+            <p class="text-sm text-gray-600 mt-2">Spent: GHS {{ number_format($project->milestones->sum('spent') ?? 0, 2) }}</p>
         </div>
     @endif
 </div>
 
-<div class="bg-white rounded-lg shadow p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-bold">Milestones</h2>
-        @if (auth()->user()->id === $project->owner_id || auth()->user()->role === 'admin')
-            <button onclick="showMilestoneForm()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
-                + Add Milestone
-            </button>
+@if ($project->start_date || $project->end_date)
+<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 p-6">
+    <h3 class="text-sm font-semibold text-gray-600 mb-3">Project Timeline</h3>
+    <div class="flex flex-wrap gap-10">
+        @if ($project->start_date)
+            <div>
+                <p class="text-xs text-gray-500 mb-1">Start Date</p>
+                <p class="text-lg font-semibold text-gray-900">{{ \Carbon\Carbon::parse($project->start_date)->format('M d, Y') }}</p>
+            </div>
+        @endif
+        @if ($project->end_date)
+            <div>
+                <p class="text-xs text-gray-500 mb-1">End Date</p>
+                <p class="text-lg font-semibold text-gray-900">{{ \Carbon\Carbon::parse($project->end_date)->format('M d, Y') }}</p>
+            </div>
         @endif
     </div>
+</div>
+@endif
 
+<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    <div class="p-6 border-b border-gray-200">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-900">Milestones</h2>
+            <button type="button" onclick="showMilestoneForm()" style="background-color: #4f46e5 !important; color: white !important;" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add Milestone
+            </button>
+        </div>
+    </div>
+
+    <div class="p-6">
     @if ($project->milestones->isEmpty())
-        <p class="text-gray-500">No milestones yet.</p>
+        <p class="text-gray-500 text-center py-8">No milestones yet. Click "Add Milestone" to get started.</p>
     @else
-        <div class="space-y-4">
+        <div class="space-y-3">
             @foreach ($project->milestones as $milestone)
-                <div class="border rounded-lg p-4 hover:bg-gray-50 transition">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <h4 class="font-bold text-gray-900">{{ $milestone->title }}</h4>
-                            <p class="text-sm text-gray-600 mt-1">{{ $milestone->description }}</p>
-                            <div class="mt-2 flex gap-4 text-sm text-gray-600">
-                                @if ($milestone->deadline)
-                                    <span>📅 {{ $milestone->deadline->format('M d, Y') }}</span>
-                                @endif
-                                @if ($milestone->budget)
-                                    <span>💵 ${{ number_format($milestone->budget, 2) }}</span>
-                                @endif
-                                <span>
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:shadow-sm transition">
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1 pr-4">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-semibold text-gray-900 text-lg">{{ $milestone->title }}</h4>
+                                <span class="text-sm font-semibold px-2 py-1 rounded-full
+                                    @if ($milestone->status === 'completed') bg-green-100 text-green-800
+                                    @elseif ($milestone->status === 'in_progress') bg-yellow-100 text-yellow-800
+                                    @else bg-gray-100 text-gray-800
+                                    @endif">
                                     @if ($milestone->status === 'completed')
-                                        ✅ Completed
+                                        Completed
                                     @elseif ($milestone->status === 'in_progress')
-                                        ⏳ In Progress
+                                        In Progress
                                     @else
-                                        ⭕ Pending
+                                        Pending
                                     @endif
                                 </span>
                             </div>
+
+                            @if ($milestone->description)
+                                <p class="text-sm text-gray-600 mt-2">{{ $milestone->description }}</p>
+                            @endif
+
+                            <div class="mt-3 flex gap-4 text-sm text-gray-600">
+                                @if ($milestone->deadline)
+                                    <span class="flex items-center gap-1">📅 <span>{{ $milestone->deadline->format('M d, Y') }}</span></span>
+                                @endif
+                                @if ($milestone->budget)
+                                    <span class="flex items-center gap-1">💵 <span>GHS {{ number_format($milestone->budget, 2) }}</span></span>
+                                @endif
+                                <span class="flex items-center gap-1">💸 <span>GHS {{ number_format($milestone->spent ?? 0, 2) }}</span></span>
+                            </div>
                         </div>
+
                         @if (auth()->user()->id === $project->owner_id || auth()->user()->role === 'admin')
-                            <div class="flex gap-2">
-                                <button onclick="editMilestone({{ $milestone->id }})" class="text-blue-600 hover:text-blue-900 text-sm">Edit</button>
-                                <form method="POST" action="/milestones/{{ $milestone->id }}" class="inline" onsubmit="return confirm('Delete milestone?');">
+                            <div class="flex-shrink-0 flex items-center gap-2">
+                                <button type="button" onclick="editMilestone({{ $milestone->id }}, {{ Js::from([
+                                    'title' => $milestone->title,
+                                    'description' => $milestone->description,
+                                    'deadline' => $milestone->deadline?->format('Y-m-d'),
+                                    'status' => $milestone->status,
+                                    'budget' => $milestone->budget,
+                                    'spent' => $milestone->spent
+                                ]) }})" class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition">Edit</button>
+
+                                <form method="POST" action="{{ route('projects.milestones.destroy', [$project, $milestone]) }}" class="inline" onsubmit="return confirm('Delete this milestone?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900 text-sm">Delete</button>
+                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white rounded-md text-sm font-semibold hover:bg-red-700 transition">Delete</button>
                                 </form>
                             </div>
                         @endif
@@ -114,21 +174,149 @@
             @endforeach
         </div>
     @endif
+    </div>
 </div>
 
-<div class="mt-8">
-    <a href="{{ route('projects.index') }}" class="text-blue-600 hover:text-blue-900">← Back to Projects</a>
+<div class="mt-6">
+    <a href="{{ route('projects.index') }}" class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-900">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to Projects
+    </a>
+</div>
+
+<!-- Milestone Modal -->
+<div id="milestoneModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto w-11/12 max-w-lg">
+        <div class="bg-white rounded-lg shadow-2xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <h3 id="modalTitle" class="text-lg font-bold text-white">Add Milestone</h3>
+                    <button type="button" onclick="closeMilestoneModal()" class="text-indigo-200 hover:text-white transition">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Modal Body -->
+            <form id="milestoneForm" method="POST" action="{{ route('projects.milestones.store', $project) }}" class="p-6">
+                @csrf
+                <input type="hidden" id="milestoneId" name="milestone_id" value="">
+                <input type="hidden" id="formMethod" name="_method" value="">
+                
+                <div class="mb-5">
+                <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">Title *</label>
+                <input type="text" id="title" name="title" required 
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+            </div>
+            
+            <div class="mb-5">
+                <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                <textarea id="description" name="description" rows="3"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-5">
+                <div>
+                    <label for="deadline" class="block text-sm font-semibold text-gray-700 mb-2">Deadline</label>
+                    <input type="date" id="deadline" name="deadline"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                </div>
+                
+                <div>
+                    <label for="status" class="block text-sm font-semibold text-gray-700 mb-2">Status *</label>
+                    <select id="status" name="status" required
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+            </div>
+            
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label for="budget" class="block text-sm font-semibold text-gray-700 mb-2">Budget (GHS)</label>
+                    <input type="number" id="budget" name="budget" step="0.01" min="0" placeholder="0.00"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                </div>
+                
+                <div>
+                    <label for="spent" class="block text-sm font-semibold text-gray-700 mb-2">Spent ($)</label>
+                    <input type="number" id="spent" name="spent" step="0.01" min="0" placeholder="0.00"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <button type="button" onclick="closeMilestoneModal()" 
+                    class="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition">
+                    Cancel
+                </button>
+                <button type="submit" 
+                    style="background-color: #4f46e5 !important; color: white !important;"
+                    class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition">
+                    Save Milestone
+                </button>
+            </div>
+        </form>
+        </div>
+    </div>
 </div>
 
 @if (auth()->user()->id === $project->owner_id || auth()->user()->role === 'admin')
     <script>
+        const modal = document.getElementById('milestoneModal');
+        const form = document.getElementById('milestoneForm');
+        const modalTitle = document.getElementById('modalTitle');
+        
         function showMilestoneForm() {
-            alert('Create milestone modal would open here.');
+            // Reset form for create
+            form.reset();
+            form.action = "{{ route('projects.milestones.store', $project) }}";
+            document.getElementById('formMethod').value = '';
+            document.getElementById('milestoneId').value = '';
+            modalTitle.textContent = 'Add Milestone';
+            modal.classList.remove('hidden');
         }
         
-        function editMilestone(id) {
-            alert('Edit milestone ' + id + ' modal would open here.');
+        function editMilestone(id, data) {
+            // Populate form for edit
+            modalTitle.textContent = 'Edit Milestone';
+            form.action = `/projects/{{ $project->id }}/milestones/${id}`;
+            document.getElementById('formMethod').value = 'PUT';
+            document.getElementById('milestoneId').value = id;
+            document.getElementById('title').value = data.title;
+            document.getElementById('description').value = data.description || '';
+            document.getElementById('deadline').value = data.deadline || '';
+            document.getElementById('status').value = data.status;
+            document.getElementById('budget').value = data.budget || '';
+            document.getElementById('spent').value = data.spent || '';
+            modal.classList.remove('hidden');
         }
+        
+        function closeMilestoneModal() {
+            modal.classList.add('hidden');
+        }
+        
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeMilestoneModal();
+            }
+        });
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeMilestoneModal();
+            }
+        });
     </script>
 @endif
         </div>

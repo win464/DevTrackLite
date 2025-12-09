@@ -12,7 +12,7 @@
                     <h2 class="text-2xl font-bold text-gray-900">My Projects</h2>
                     <p class="text-sm text-gray-600 mt-1">Manage your projects and track progress</p>
                 </div>
-                <a href="{{ route('projects.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                <a href="{{ route('projects.create') }}" style="background-color: #2563eb !important; color: white !important;" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     + New Project
                 </a>
             </div>

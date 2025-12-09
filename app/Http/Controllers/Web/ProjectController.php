@@ -12,11 +12,8 @@ class ProjectController extends Controller
     {
         // Get paginated projects for current user (owned by them or all if admin)
         $projects = auth()->user()->role === 'admin'
-            ? Project::paginate(12)
-            : Project::where('owner_id', auth()->id())->paginate(12);
-
-        // Eager load milestones for progress calculation
-        $projects->load('milestones');
+            ? Project::with('milestones')->withCount('milestones')->paginate(12)
+            : Project::where('owner_id', auth()->id())->with('milestones')->withCount('milestones')->paginate(12);
 
         return view('projects.index', compact('projects'));
     }
@@ -44,6 +41,8 @@ class ProjectController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'nullable|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'budget' => 'nullable|numeric|min:0',
         ]);
 
@@ -73,6 +72,8 @@ class ProjectController extends Controller
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'nullable|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'budget' => 'nullable|numeric|min:0',
         ]);
 
