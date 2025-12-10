@@ -25,14 +25,15 @@ class ProjectController extends Controller
             abort(403);
         }
 
-        $project->load('milestones');
+        $project->load(['milestones.assignedUsers', 'teamMembers']);
 
         return view('projects.show', compact('project'));
     }
 
     public function create()
     {
-        return view('projects.form');
+        $users = \App\Models\User::select('id', 'name', 'email')->orderBy('name')->get();
+        return view('projects.form', compact('users'));
     }
 
     public function store(Request $request)
@@ -44,11 +45,18 @@ class ProjectController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'budget' => 'nullable|numeric|min:0',
+            'team_members' => 'nullable|array',
+            'team_members.*' => 'exists:users,id',
         ]);
 
         $data['owner_id'] = auth()->id();
 
-        Project::create($data);
+        $project = Project::create($data);
+        
+        // Attach team members if provided
+        if ($request->has('team_members')) {
+            $project->teamMembers()->attach($request->team_members);
+        }
 
         return redirect()->route('projects.index')->with('success', 'Project created successfully!');
     }
@@ -59,7 +67,9 @@ class ProjectController extends Controller
             abort(403);
         }
 
-        return view('projects.form', compact('project'));
+        $users = \App\Models\User::select('id', 'name', 'email')->orderBy('name')->get();
+        $project->load('teamMembers');
+        return view('projects.form', compact('project', 'users'));
     }
 
     public function update(Request $request, Project $project)
@@ -75,9 +85,18 @@ class ProjectController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'budget' => 'nullable|numeric|min:0',
+            'team_members' => 'nullable|array',
+            'team_members.*' => 'exists:users,id',
         ]);
 
         $project->update($data);
+        
+        // Sync team members
+        if ($request->has('team_members')) {
+            $project->teamMembers()->sync($request->team_members);
+        } else {
+            $project->teamMembers()->detach();
+        }
 
         return redirect()->route('projects.show', $project)->with('success', 'Project updated successfully!');
     }

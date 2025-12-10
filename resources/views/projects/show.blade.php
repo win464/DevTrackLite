@@ -77,6 +77,26 @@
     @endif
 </div>
 
+<!-- Team Members Section -->
+@if ($project->teamMembers->count() > 0)
+<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 p-6">
+    <h3 class="text-sm font-semibold text-gray-600 mb-3">Team Members ({{ $project->teamMembers->count() }})</h3>
+    <div class="flex flex-wrap gap-2">
+        @foreach($project->teamMembers as $member)
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-full">
+                <div class="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold">
+                    {{ strtoupper(substr($member->name, 0, 1)) }}
+                </div>
+                <span class="text-sm font-medium text-indigo-900">{{ $member->name }}</span>
+                @if($member->pivot->role)
+                    <span class="text-xs text-indigo-600">({{ ucfirst($member->pivot->role) }})</span>
+                @endif
+            </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 @if ($project->start_date || $project->end_date)
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 p-6">
     <h3 class="text-sm font-semibold text-gray-600 mb-3">Project Timeline</h3>
@@ -149,6 +169,24 @@
                                 @endif
                                 <span class="flex items-center gap-1">💸 <span>GHS {{ number_format($milestone->spent ?? 0, 2) }}</span></span>
                             </div>
+
+                            @if ($milestone->assignedUsers->count() > 0)
+                                <div class="mt-3 flex items-center gap-2">
+                                    <span class="text-xs text-gray-500">Assigned to:</span>
+                                    <div class="flex -space-x-2">
+                                        @foreach($milestone->assignedUsers->take(3) as $user)
+                                            <div class="w-7 h-7 rounded-full bg-indigo-600 border-2 border-white flex items-center justify-center text-white text-xs font-semibold" title="{{ $user->name }}">
+                                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                                            </div>
+                                        @endforeach
+                                        @if($milestone->assignedUsers->count() > 3)
+                                            <div class="w-7 h-7 rounded-full bg-gray-400 border-2 border-white flex items-center justify-center text-white text-xs font-semibold">
+                                                +{{ $milestone->assignedUsers->count() - 3 }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         @if (auth()->user()->id === $project->owner_id || auth()->user()->role === 'admin')
@@ -159,7 +197,8 @@
                                     'deadline' => $milestone->deadline?->format('Y-m-d'),
                                     'status' => $milestone->status,
                                     'budget' => $milestone->budget,
-                                    'spent' => $milestone->spent
+                                    'spent' => $milestone->spent,
+                                    'assigned_users' => $milestone->assignedUsers->pluck('id')->toArray()
                                 ]) }})" class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition">Edit</button>
 
                                 <form method="POST" action="{{ route('projects.milestones.destroy', [$project, $milestone]) }}" class="inline" onsubmit="return confirm('Delete this milestone?');">
@@ -238,6 +277,28 @@
                 </div>
             </div>
             
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Assign To</label>
+                <div class="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto bg-gray-50">
+                    @if($project->teamMembers->count() > 0)
+                        @foreach($project->teamMembers as $member)
+                            <label class="flex items-center py-1 hover:bg-white px-2 rounded cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    name="assigned_users[]" 
+                                    value="{{ $member->id }}"
+                                    class="milestone-assign-checkbox mr-2 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <span class="text-sm text-gray-700">{{ $member->name }}</span>
+                            </label>
+                        @endforeach
+                    @else
+                        <p class="text-sm text-gray-500">No team members assigned to this project</p>
+                    @endif
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Select team members to work on this milestone</p>
+            </div>
+
                     <div class="grid grid-cols-2 gap-4 mb-6">
                 <div>
                     <label for="budget" class="block text-sm font-semibold text-gray-700 mb-2">Budget (GHS)</label>
@@ -282,6 +343,10 @@
             document.getElementById('formMethod').value = '';
             document.getElementById('milestoneId').value = '';
             modalTitle.textContent = 'Add Milestone';
+            
+            // Uncheck all assigned users
+            document.querySelectorAll('.milestone-assign-checkbox').forEach(cb => cb.checked = false);
+            
             modal.classList.remove('hidden');
         }
         
@@ -297,6 +362,12 @@
             document.getElementById('status').value = data.status;
             document.getElementById('budget').value = data.budget || '';
             document.getElementById('spent').value = data.spent || '';
+            
+            // Handle assigned users
+            document.querySelectorAll('.milestone-assign-checkbox').forEach(cb => {
+                cb.checked = data.assigned_users && data.assigned_users.includes(parseInt(cb.value));
+            });
+            
             modal.classList.remove('hidden');
         }
         

@@ -33,6 +33,13 @@ class Project extends Model
         return $this->hasMany(Milestone::class);
     }
 
+    public function teamMembers()
+    {
+        return $this->belongsToMany(User::class, 'project_user')
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
     public function getProgressAttribute(): int
     {
         $total = $this->milestones()->count();

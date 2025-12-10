@@ -116,6 +116,40 @@
                 </div>
             </div>
 
+            <!-- Team Workload Section (Admin Only) -->
+            @if(auth()->user()->role === 'admin' && $teamWorkload->count() > 0)
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Team Workload</h3>
+                <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6">
+                    <div class="space-y-4">
+                        @foreach($teamWorkload as $member)
+                            <div class="flex items-center justify-between pb-3 border-b border-gray-100 last:border-0 last:pb-0">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+                                        {{ strtoupper(substr($member->name, 0, 1)) }}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-900">{{ $member->name }}</p>
+                                        <p class="text-xs text-gray-500">{{ $member->email }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4 text-sm">
+                                    <div class="text-right">
+                                        <p class="font-semibold text-indigo-600">{{ $member->projects_count }}</p>
+                                        <p class="text-xs text-gray-500">Projects</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-semibold text-emerald-600">{{ $member->milestones_count }}</p>
+                                        <p class="text-xs text-gray-500">Milestones</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            @endif
+
 
             <!-- CHARTS SECTION -->
             <div>
@@ -124,28 +158,25 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
                     <!-- Progress Chart -->
-                    <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 
-                                aspect-square flex flex-col gap-3">
-                        <h4 class="text-sm font-semibold text-gray-700">Progress Over Time</h4>
-                        <div class="flex-1 relative">
+                    <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 aspect-square flex flex-col">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Progress Over Time</h4>
+                        <div style="flex: 1; position: relative; min-height: 0;">
                             <canvas id="progressChart"></canvas>
                         </div>
                     </div>
 
                     <!-- Budget Chart -->
-                    <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 
-                                aspect-square flex flex-col gap-3">
-                        <h4 class="text-sm font-semibold text-gray-700">Budget Usage (Top Projects)</h4>
-                        <div class="flex-1 relative">
+                    <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 aspect-square flex flex-col">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Budget Usage (Top Projects)</h4>
+                        <div style="flex: 1; position: relative; min-height: 0;">
                             <canvas id="budgetChart"></canvas>
                         </div>
                     </div>
 
                     <!-- Milestone Chart -->
-                    <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 
-                                aspect-square flex flex-col gap-3">
-                        <h4 class="text-sm font-semibold text-gray-700">Milestones Status</h4>
-                        <div class="flex-1 relative">
+                    <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 aspect-square flex flex-col">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Milestones Status</h4>
+                        <div style="flex: 1; position: relative; min-height: 0;">
                             <canvas id="milestoneChart"></canvas>
                         </div>
                     </div>

@@ -92,6 +92,32 @@
             </div>
         </div>
 
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Team Members</label>
+            <div class="border border-gray-300 rounded p-3 max-h-48 overflow-y-auto bg-white">
+                @if(isset($users) && $users->count() > 0)
+                    @php
+                        $selectedMembers = old('team_members', isset($project) ? $project->teamMembers->pluck('id')->toArray() : []);
+                    @endphp
+                    @foreach($users as $user)
+                        <label class="flex items-center py-1 hover:bg-gray-50 px-2 rounded cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                name="team_members[]" 
+                                value="{{ $user->id }}"
+                                {{ in_array($user->id, $selectedMembers) ? 'checked' : '' }}
+                                class="mr-2 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span class="text-sm text-gray-700">{{ $user->name }} ({{ $user->email }})</span>
+                        </label>
+                    @endforeach
+                @else
+                    <p class="text-sm text-gray-500">No users available</p>
+                @endif
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Select users who will be part of this project team</p>
+        </div>
+
         <div class="flex gap-4">
             <button type="submit" style="background-color: #2563eb !important; color: white !important;" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold">
                 {{ isset($project) ? 'Update' : 'Create' }} Project

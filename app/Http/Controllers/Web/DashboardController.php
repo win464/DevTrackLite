@@ -77,6 +77,15 @@ class DashboardController extends Controller
             ],
         ];
 
+        // Team workload - Get users with their project and milestone counts
+        $teamWorkload = $isAdmin 
+            ? \App\Models\User::withCount(['projects', 'milestones'])
+                ->get()
+                ->filter(fn($user) => $user->projects_count > 0 || $user->milestones_count > 0)
+                ->sortByDesc('milestones_count')
+                ->take(5)
+            : collect();
+
         return view('dashboard', [
             'summary' => [
                 'total' => $totalProjects,
@@ -92,6 +101,7 @@ class DashboardController extends Controller
             'progressByMonth' => $progressByMonth,
             'budgetChart' => $budgetChart,
             'milestoneChart' => $milestoneChart,
+            'teamWorkload' => $teamWorkload,
         ]);
     }
 }

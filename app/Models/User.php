@@ -50,6 +50,25 @@ class User extends Authenticatable
     }
 
     /**
+     * Projects where this user is a team member
+     */
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'project_user')
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Milestones assigned to this user
+     */
+    public function milestones()
+    {
+        return $this->belongsToMany(Milestone::class, 'milestone_user')
+                    ->withTimestamps();
+    }
+
+    /**
      * Check if the user has one of the given roles.
      */
     public function hasRole(string|array $roles): bool

@@ -23,11 +23,18 @@ class MilestoneController extends Controller
             'status' => 'required|in:pending,in_progress,completed',
             'budget' => 'nullable|numeric|min:0',
             'spent' => 'nullable|numeric|min:0',
+            'assigned_users' => 'nullable|array',
+            'assigned_users.*' => 'exists:users,id',
         ]);
 
         $data['project_id'] = $project->id;
 
-        Milestone::create($data);
+        $milestone = Milestone::create($data);
+        
+        // Attach assigned users if provided
+        if ($request->has('assigned_users')) {
+            $milestone->assignedUsers()->attach($request->assigned_users);
+        }
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Milestone created successfully!');
@@ -52,9 +59,18 @@ class MilestoneController extends Controller
             'status' => 'sometimes|required|in:pending,in_progress,completed',
             'budget' => 'nullable|numeric|min:0',
             'spent' => 'nullable|numeric|min:0',
+            'assigned_users' => 'nullable|array',
+            'assigned_users.*' => 'exists:users,id',
         ]);
 
         $milestone->update($data);
+        
+        // Sync assigned users
+        if ($request->has('assigned_users')) {
+            $milestone->assignedUsers()->sync($request->assigned_users);
+        } else {
+            $milestone->assignedUsers()->detach();
+        }
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Milestone updated successfully!');

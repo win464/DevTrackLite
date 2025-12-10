@@ -24,6 +24,12 @@ class Milestone extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function assignedUsers()
+    {
+        return $this->belongsToMany(User::class, 'milestone_user')
+                    ->withTimestamps();
+    }
+
     public function isOverdue(): bool
     {
         return $this->deadline && $this->status !== 'completed' && now()->greaterThan($this->deadline);
