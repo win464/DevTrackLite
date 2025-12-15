@@ -1,6 +1,4 @@
-<?php
-
-namespace Database\Seeders;
+Database\Seeders;
 
 use App\Models\User;
 use App\Enums\UserRole;

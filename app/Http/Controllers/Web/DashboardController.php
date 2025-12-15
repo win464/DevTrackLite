@@ -15,13 +15,31 @@ class DashboardController extends Controller
         $user = $request->user();
         $isAdmin = $user && $user->role === 'admin';
 
-        $projectsQuery = $isAdmin
-            ? Project::query()
-            : Project::where('owner_id', $user->id);
-
-        $projects = $projectsQuery
+        // Get projects: Admin sees all, Manager sees owned + assigned, Viewer sees assigned
+        if ($isAdmin) {
+            $projects = Project::with('milestones')->get();
+        } elseif ($user->role === 'manager') {
+            $projects = Project::where(function($query) use ($user) {
+                $query->where('owner_id', $user->id)
+                      ->orWhereHas('teamMembers', function($q) use ($user) {
+                          $q->where('user_id', $user->id);
+                      });
+            })
             ->with('milestones')
             ->get();
+        } else {
+            // Viewer: see assigned projects (team members or milestone assignees)
+            $projects = Project::where(function($query) use ($user) {
+                $query->whereHas('teamMembers', function($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
+                ->orWhereHas('milestones.assignedUsers', function($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                });
+            })
+            ->with('milestones')
+            ->get();
+        }
 
         $projectIds = $projects->pluck('id');
 

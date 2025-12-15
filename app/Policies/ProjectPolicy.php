@@ -15,6 +15,7 @@ class ProjectPolicy
      */
     public function viewAny(User $user)
     {
+        // All authenticated users can view projects (filtered by role in controller)
         return true;
     }
 
@@ -23,7 +24,25 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project)
     {
-        return true;
+        // Admin can view all
+        if ($user->role === 'admin') {
+            return true;
+        }
+        
+        // Owner can view their own projects
+        if ($project->owner_id === $user->id) {
+            return true;
+        }
+        
+        // Can view if assigned as team member
+        if ($project->teamMembers()->where('user_id', $user->id)->exists()) {
+            return true;
+        }
+        
+        // Can view if assigned to any milestone in the project
+        return $project->milestones()->whereHas('assignedUsers', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->exists();
     }
 
     /**
@@ -31,8 +50,8 @@ class ProjectPolicy
      */
     public function create(User $user)
     {
-        // Any authenticated user can create a project
-        return $user !== null;
+        // Only managers and admins can create projects
+        return in_array($user->role, ['admin', 'manager']);
     }
 
     /**
@@ -40,8 +59,9 @@ class ProjectPolicy
      */
     public function update(User $user, Project $project)
     {
-        // Admin can update any project; otherwise only owners
-        return $user->role === 'admin' || $project->owner_id === $user->id;
+        // Admin can update any project; managers can update owned projects
+        return $user->role === 'admin' || 
+               ($user->role === 'manager' && $project->owner_id === $user->id);
     }
 
     /**
@@ -49,7 +69,8 @@ class ProjectPolicy
      */
     public function delete(User $user, Project $project)
     {
-        // Admin can delete any project; otherwise only owners
-        return $user->role === 'admin' || $project->owner_id === $user->id;
+        // Admin can delete any project; managers can delete owned projects
+        return $user->role === 'admin' || 
+               ($user->role === 'manager' && $project->owner_id === $user->id);
     }
 }

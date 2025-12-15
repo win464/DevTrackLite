@@ -160,7 +160,7 @@
                     <!-- Progress Chart -->
                     <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 aspect-square flex flex-col">
                         <h4 class="text-sm font-semibold text-gray-700 mb-3">Progress Over Time</h4>
-                        <div style="flex: 1; position: relative; min-height: 0;">
+                        <div class="chart-container flex-1">
                             <canvas id="progressChart"></canvas>
                         </div>
                     </div>
@@ -168,7 +168,7 @@
                     <!-- Budget Chart -->
                     <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 aspect-square flex flex-col">
                         <h4 class="text-sm font-semibold text-gray-700 mb-3">Budget Usage (Top Projects)</h4>
-                        <div style="flex: 1; position: relative; min-height: 0;">
+                        <div class="chart-container flex-1">
                             <canvas id="budgetChart"></canvas>
                         </div>
                     </div>
@@ -190,6 +190,11 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Stabilize chart sizing without changing card layout */
+        .chart-container { position: relative; height: 100%; min-height: 0; }
+        .chart-container > canvas { position: absolute; inset: 0; display: block; }
+    </style>
 
     <script>
         const progressData = @json($progressByMonth);
@@ -218,6 +223,7 @@
             options: {
                 maintainAspectRatio: false,
                 responsive: true,
+                resizeDelay: 150,
                 plugins: {
                     legend: { display: false },
                     tooltip: {
@@ -263,8 +269,10 @@
                 ]
             },
             options: {
+                indexAxis: 'y',
                 maintainAspectRatio: false,
                 responsive: true,
+                resizeDelay: 150,
                 plugins: {
                     legend: {
                         position: 'bottom',
@@ -276,17 +284,17 @@
                         cornerRadius: 8,
                         callbacks: {
                             label: function(context) {
-                                return context.dataset.label + ': GHS ' + context.parsed.y.toLocaleString();
+                                return context.dataset.label + ': GHS ' + context.parsed.x.toLocaleString();
                             }
                         }
                     }
                 },
                 scales: {
-                    y: {
+                    x: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0,0,0,0.05)' }
                     },
-                    x: {
+                    y: {
                         grid: { display: false }
                     }
                 }

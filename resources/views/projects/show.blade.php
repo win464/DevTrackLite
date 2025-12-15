@@ -26,18 +26,20 @@
                 <h1 class="text-2xl font-bold text-gray-900">{{ $project->title }}</h1>
                 <p class="text-gray-600 mt-2">{{ $project->description }}</p>
             </div>
-            @if (auth()->user()->id === $project->owner_id || auth()->user()->role === 'admin')
+            @can('update', $project)
                 <div class="flex gap-3 ml-4 items-center">
                     <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md font-semibold text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition">
                         Edit Project
                     </a>
-                    <form method="POST" action="{{ route('projects.destroy', $project) }}" class="inline" onsubmit="return confirm('Delete this project and all its milestones?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="inline-flex items-center px-3 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-sm text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition">Delete</button>
-                    </form>
+                    @can('delete', $project)
+                        <form method="POST" action="{{ route('projects.destroy', $project) }}" class="inline" onsubmit="return confirm('Delete this project and all its milestones?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="inline-flex items-center px-3 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-sm text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition">Delete</button>
+                        </form>
+                    @endcan
                 </div>
-            @endif
+            @endcan
         </div>
     </div>
 </div>
@@ -121,12 +123,14 @@
     <div class="p-6 border-b border-gray-200">
         <div class="flex justify-between items-center">
             <h2 class="text-xl font-semibold text-gray-900">Milestones</h2>
-            <button type="button" onclick="showMilestoneForm()" style="background-color: #4f46e5 !important; color: white !important;" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Add Milestone
-            </button>
+            @can('update', $project)
+                <button type="button" onclick="showMilestoneForm()" style="background-color: #4f46e5 !important; color: white !important;" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Milestone
+                </button>
+            @endcan
         </div>
     </div>
 
@@ -189,8 +193,8 @@
                             @endif
                         </div>
 
-                        @if (auth()->user()->id === $project->owner_id || auth()->user()->role === 'admin')
-                            <div class="flex-shrink-0 flex items-center gap-2">
+                        <div class="flex-shrink-0 flex items-center gap-2">
+                            @can('update', $milestone)
                                 <button type="button" onclick="editMilestone({{ $milestone->id }}, {{ Js::from([
                                     'title' => $milestone->title,
                                     'description' => $milestone->description,
@@ -200,14 +204,18 @@
                                     'spent' => $milestone->spent,
                                     'assigned_users' => $milestone->assignedUsers->pluck('id')->toArray()
                                 ]) }})" class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition">Edit</button>
+                            @elsecan('updateStatus', $milestone)
+                                <button type="button" onclick="showStatusUpdateForm({{ $milestone->id }}, '{{ $milestone->status }}')" class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-md text-sm font-semibold text-white hover:bg-indigo-700 transition">Update Status</button>
+                            @endcan
 
+                            @can('delete', $milestone)
                                 <form method="POST" action="{{ route('projects.milestones.destroy', [$project, $milestone]) }}" class="inline" onsubmit="return confirm('Delete this milestone?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white rounded-md text-sm font-semibold hover:bg-red-700 transition">Delete</button>
                                 </form>
-                            </div>
-                        @endif
+                            @endcan
+                        </div>
                     </div>
                 </div>
             @endforeach
@@ -390,6 +398,74 @@
         });
     </script>
 @endif
+
+<script>
+    // These functions must be outside the conditional to be available to all users
+    function showStatusUpdateForm(id, currentStatus) {
+        // Create a simple status update form in an overlay
+        const modal = document.createElement('div');
+        modal.id = 'statusModal';
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 mx-4">
+                <h3 class="text-lg font-semibold mb-4">Update Milestone Status</h3>
+                <form id="statusForm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select id="statusSelect" name="status" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="in_progress" ${currentStatus === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="completed" ${currentStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-3 justify-end">
+                        <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300" onclick="document.getElementById('statusModal').remove()">Cancel</button>
+                        <button type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700" onclick="submitStatusUpdate(${id})">Update</button>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close modal on outside click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+    
+    function submitStatusUpdate(milestoneId) {
+        const status = document.getElementById('statusSelect').value;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        fetch(`/projects/{{ $project->id }}/milestones/${milestoneId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                status: status
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error updating status. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating status: ' + error);
+        });
+    }
+</script>
         </div>
     </div>
 </x-app-layout>
