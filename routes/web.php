@@ -34,6 +34,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('projects/{project}/milestones/{milestone}/status', [App\Http\Controllers\Web\MilestoneController::class, 'updateStatus'])->name('projects.milestones.updateStatus');
     Route::delete('projects/{project}/milestones/{milestone}', [App\Http\Controllers\Web\MilestoneController::class, 'destroy'])->name('projects.milestones.destroy');
     
+    // Export routes
+    Route::get('projects/{project}/export/pdf', [App\Http\Controllers\Web\ExportController::class, 'projectPdf'])->name('projects.export.pdf');
+    Route::get('projects/export/excel', [App\Http\Controllers\Web\ExportController::class, 'projectsExcel'])->name('projects.export.excel');
+    Route::get('projects/{project}/milestones/export/pdf', [App\Http\Controllers\Web\ExportController::class, 'milestonesPdf'])->name('projects.milestones.export.pdf');
+    
     // User management (admin only)
     Route::resource('users', App\Http\Controllers\Web\UserController::class)->only(['index', 'edit', 'update', 'destroy']);
 });

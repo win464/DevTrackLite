@@ -26,8 +26,24 @@
                 <h1 class="text-2xl font-bold text-gray-900">{{ $project->title }}</h1>
                 <p class="text-gray-600 mt-2">{{ $project->description }}</p>
             </div>
-            @can('update', $project)
-                <div class="flex gap-3 ml-4 items-center">
+            <div class="flex gap-3 ml-4 items-center">
+                <!-- Export Buttons -->
+                <div class="flex gap-2 border-r border-gray-300 pr-3">
+                    <a href="{{ route('projects.export.pdf', $project) }}" class="inline-flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md font-semibold text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition" title="Export project as PDF">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        PDF
+                    </a>
+                    <a href="{{ route('projects.milestones.export.pdf', $project) }}" class="inline-flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md font-semibold text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition" title="Export milestones as PDF">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        Milestones
+                    </a>
+                </div>
+                
+                @can('update', $project)
                     <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md font-semibold text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition">
                         Edit Project
                     </a>
@@ -38,8 +54,8 @@
                             <button type="submit" class="inline-flex items-center px-3 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-sm text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition">Delete</button>
                         </form>
                     @endcan
-                </div>
-            @endcan
+                @endcan
+            </div>
         </div>
     </div>
 </div>
