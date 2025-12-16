@@ -1,0 +1,1014 @@
+openapi: 3.0.3
+info:
+  title: DevTrackLite API
+  description: |
+    Project and milestone management API for DevTrackLite.
+    
+    ## Authentication
+    Most endpoints require authentication using Sanctum tokens. To authenticate:
+    1. POST to `/api/token` with email/password to get a token
+    2. Include the token in the `Authorization` header as `Bearer {token}`
+    
+    ## Rate Limiting
+    API requests are rate-limited per IP address or user token:
+    
+    | Tier | Limit | Duration | Applies To |
+    |------|-------|----------|-----------|
+    | Public | 30 requests | 1 minute | `/api/stats` (public), `/api/public/projects*` |
+    | Authenticated | 60 requests | 1 minute | `/api/stats` (user), `/api/projects/*`, `/api/milestones/*` |
+    | Admin | 100 requests | 1 minute | `/api/admin/*` |
+    | Token Issue | 10 requests | 1 minute | `POST /api/token` |
+    
+    When rate limit is exceeded, the API returns `429 Too Many Requests` with headers:
+    - `X-RateLimit-Limit`: Maximum requests allowed
+    - `X-RateLimit-Remaining`: Requests remaining in current window
+    - `X-RateLimit-Reset`: Unix timestamp when limit resets
+    
+    ## Response Format
+    All successful responses return data in a `data` object. Error responses include an `error` message.
+  version: 1.0.0
+  contact:
+    name: DevTrackLite
+  license:
+    name: MIT
+
+servers:
+  - url: http://127.0.0.1:8000/api
+    description: Local development server
+  - url: https://your-domain.com/api
+    description: Production server
+
+tags:
+  - name: Public
+    description: Public read-only endpoints (no authentication required)
+  - name: Authentication
+    description: Token management endpoints
+  - name: Stats
+    description: Statistics and analytics endpoints
+  - name: Milestones
+    description: Milestone management (requires authentication)
+  - name: Admin
+    description: Admin-only endpoints (requires admin role)
+
+paths:
+  /status:
+    get:
+      summary: API health check
+      tags: [Public]
+      responses:
+        '200':
+          description: API is operational
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /stats:
+    get:
+      summary: Get public system statistics
+      tags: [Stats]
+      description: Returns aggregated statistics about all projects, budgets, and milestones in the system. **Rate limit: 30 requests/min**
+      responses:
+        '200':
+          description: System statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PublicStats'
+        '429':
+          description: Rate limit exceeded
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Maximum requests allowed per minute
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: Requests remaining in current window
+            X-RateLimit-Reset:
+              schema:
+                type: integer
+              description: Unix timestamp when limit resets
+
+  /stats:
+    get:
+      summary: Get authenticated user's statistics
+      tags: [Stats]
+      description: Returns statistics for projects visible to the authenticated user, including owned, assigned, and progress data
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserStats'
+        '401':
+          description: Unauthenticated
+
+  /admin/stats:
+    get:
+      summary: Get authenticated user's statistics (admin endpoint)
+      tags: [Stats]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserStats'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden (requires admin role)
+
+  /public/projects:
+    get:
+      summary: List all projects
+      tags: [Public]
+      parameters:
+        - name: per_page
+          in: query
+          description: Number of items per page (1-100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 15
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /public/projects/{id}:
+    get:
+      summary: Get a single project
+      tags: [Public]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Project'
+        '404':
+          description: Project not found
+
+  /public/projects/{id}/milestones:
+    get:
+      summary: List milestones for a project
+      tags: [Public]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          description: Number of items per page (1-100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 15
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        '200':
+          description: List of milestones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Milestone'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '404':
+          description: Project not found
+
+  /token:
+    post:
+      summary: Issue API token
+      tags: [Authentication]
+      description: Exchange email/password for a Sanctum API token. **Rate limit: 10 requests/min** (most restrictive to prevent brute force attacks)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password
+                token_name:
+                  type: string
+                  description: Optional name for the token
+                  example: My API Token
+                abilities:
+                  type: array
+                  description: Optional token abilities
+                  items:
+                    type: string
+                  example: ["*"]
+      responses:
+        '200':
+          description: Token issued successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: 1|abc123def456...
+        '401':
+          description: Invalid credentials
+        '429':
+          description: Too many requests (rate limit exceeded)
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Maximum requests allowed per minute
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: Requests remaining in current window
+            X-RateLimit-Reset:
+              schema:
+                type: integer
+              description: Unix timestamp when limit resets
+
+  /token/revoke:
+    post:
+      summary: Revoke current API token
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Token revoked
+        '401':
+          description: Unauthenticated
+
+  /projects/{project}/milestones:
+    post:
+      summary: Create a milestone
+      tags: [Milestones]
+      description: Create a new milestone for a project (requires owner or admin role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                  example: Design Phase
+                description:
+                  type: string
+                  nullable: true
+                  example: Complete UI/UX design mockups
+                deadline:
+                  type: string
+                  format: date
+                  nullable: true
+                  example: "2025-12-31"
+                status:
+                  type: string
+                  enum: [pending, in_progress, completed]
+                  example: pending
+                budget:
+                  type: number
+                  format: float
+                  minimum: 0
+                  nullable: true
+                  example: 5000.00
+                spent:
+                  type: number
+                  format: float
+                  minimum: 0
+                  nullable: true
+                  example: 2500.00
+      responses:
+        '201':
+          description: Milestone created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Milestone'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden (not project owner or admin)
+        '422':
+          description: Validation error
+
+  /milestones/{milestone}:
+    patch:
+      summary: Update a milestone
+      tags: [Milestones]
+      description: Update milestone details (requires authorization)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: milestone
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                  nullable: true
+                deadline:
+                  type: string
+                  format: date
+                  nullable: true
+                status:
+                  type: string
+                  enum: [pending, in_progress, completed]
+                budget:
+                  type: number
+                  format: float
+                  minimum: 0
+                  nullable: true
+                spent:
+                  type: number
+                  format: float
+                  minimum: 0
+                  nullable: true
+      responses:
+        '200':
+          description: Milestone updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Milestone'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden
+        '404':
+          description: Milestone not found
+        '422':
+          description: Validation error
+
+    delete:
+      summary: Delete a milestone
+      tags: [Milestones]
+      description: Delete a milestone (requires authorization)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: milestone
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Milestone deleted
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden
+        '404':
+          description: Milestone not found
+
+  /admin/projects:
+    get:
+      summary: List all projects (admin)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 15
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden (requires admin role)
+
+    post:
+      summary: Create a project (admin)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                  example: Website Redesign
+                description:
+                  type: string
+                  nullable: true
+                  example: Complete redesign of company website
+                status:
+                  type: string
+                  nullable: true
+                  example: active
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden (requires admin role)
+        '422':
+          description: Validation error
+
+  /admin/projects/{id}:
+    get:
+      summary: Get a project (admin)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden (requires admin role)
+        '404':
+          description: Project not found
+
+    put:
+      summary: Update a project (admin)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                  nullable: true
+                status:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden (requires admin role)
+        '404':
+          description: Project not found
+        '422':
+          description: Validation error
+
+    patch:
+      summary: Partially update a project (admin)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                  nullable: true
+                status:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden (requires admin role)
+        '404':
+          description: Project not found
+        '422':
+          description: Validation error
+
+    delete:
+      summary: Delete a project (admin)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Project deleted
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden (requires admin role)
+        '404':
+          description: Project not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Sanctum API token (use format "Bearer {token}")
+
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Website Redesign
+        description:
+          type: string
+          nullable: true
+          example: Complete redesign of company website
+        status:
+          type: string
+          example: active
+        owner_id:
+          type: integer
+          nullable: true
+          example: 1
+        budget:
+          type: number
+          format: float
+          nullable: true
+          example: 50000.00
+        spent:
+          type: number
+          format: float
+          nullable: true
+          example: 25000.00
+        progress:
+          type: integer
+          description: Percentage completion (0-100)
+          example: 50
+        overdue:
+          type: boolean
+          description: Whether the project has overdue milestones
+          example: false
+        over_budget:
+          type: boolean
+          description: Whether spending exceeds budget
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-12-15T14:20:00.000000Z"
+
+    Milestone:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        project_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Design Phase
+        description:
+          type: string
+          nullable: true
+          example: Complete UI/UX design mockups
+        deadline:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-12-31"
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+          example: in_progress
+        budget:
+          type: number
+          format: float
+          nullable: true
+          example: 5000.00
+        spent:
+          type: number
+          format: float
+          nullable: true
+          example: 2500.00
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-12-15T14:20:00.000000Z"
+
+    PaginationLinks:
+      type: object
+      properties:
+        first:
+          type: string
+          example: "http://127.0.0.1:8000/api/public/projects?page=1"
+        last:
+          type: string
+          example: "http://127.0.0.1:8000/api/public/projects?page=5"
+        prev:
+          type: string
+          nullable: true
+          example: null
+        next:
+          type: string
+          nullable: true
+          example: "http://127.0.0.1:8000/api/public/projects?page=2"
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        from:
+          type: integer
+          example: 1
+        last_page:
+          type: integer
+          example: 5
+        path:
+          type: string
+          example: "http://127.0.0.1:8000/api/public/projects"
+        per_page:
+          type: integer
+          example: 15
+        to:
+          type: integer
+          example: 15
+        total:
+          type: integer
+          example: 73
+
+    PublicStats:
+      type: object
+      properties:
+        projects:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 5
+            active:
+              type: integer
+              example: 3
+            completed:
+              type: integer
+              example: 2
+            overdue:
+              type: integer
+              example: 0
+        budget:
+          type: object
+          properties:
+            total:
+              type: number
+              format: float
+              example: 100000
+            spent:
+              type: number
+              format: float
+              example: 45000
+            remaining:
+              type: number
+              format: float
+              example: 55000
+            percent_used:
+              type: integer
+              example: 45
+        progress:
+          type: object
+          properties:
+            average:
+              type: integer
+              description: Average project progress (0-100)
+              example: 60
+        milestones:
+          type: object
+          properties:
+            pending:
+              type: integer
+              example: 8
+            in_progress:
+              type: integer
+              example: 12
+            completed:
+              type: integer
+              example: 15
+        users:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 5
+            active:
+              type: integer
+              description: Non-viewer users (admin + manager)
+              example: 3
+
+    UserStats:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 2
+            email:
+              type: string
+              format: email
+              example: user@example.com
+            role:
+              type: string
+              enum: [admin, manager, viewer]
+              example: manager
+        projects:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 4
+            owned:
+              type: integer
+              example: 2
+            assigned:
+              type: integer
+              example: 2
+            active:
+              type: integer
+              example: 3
+            completed:
+              type: integer
+              example: 1
+            overdue:
+              type: integer
+              example: 0
+        budget:
+          type: object
+          properties:
+            total:
+              type: number
+              format: float
+              example: 75000
+            spent:
+              type: number
+              format: float
+              example: 30000
+            remaining:
+              type: number
+              format: float
+              example: 45000
+            percent_used:
+              type: integer
+              example: 40
+        progress:
+          type: object
+          properties:
+            average:
+              type: integer
+              description: Average progress across visible projects (0-100)
+              example: 55
+            by_month:
+              type: array
+              description: Progress history for the last 6 months
+              items:
+                type: object
+                properties:
+                  label:
+                    type: string
+                    example: "Jul 2025"
+                  value:
+                    type: integer
+                    example: 20
+        milestones:
+          type: object
+          properties:
+            pending:
+              type: integer
+              example: 5
+            in_progress:
+              type: integer
+              example: 8
+            completed:
+              type: integer
+              example: 10
+        tasks:
+          type: object
+          description: Milestones directly assigned to the user
+          properties:
+            assigned_to_me:
+              type: integer
+              example: 5
+            overdue_assigned:
+              type: integer
+              example: 1
