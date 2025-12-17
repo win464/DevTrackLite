@@ -65,6 +65,11 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
 // Protected admin routes (100 requests per minute)
 Route::middleware(['auth:sanctum', 'throttle:100,1', 'App\\Http\\Middleware\\EnsureUserHasRole:admin'])->prefix('admin')->group(function () {
+    // Admin ping endpoint
+    Route::get('/ping', function (Request $request) {
+        return response()->json(['admin' => $request->user()->email]);
+    });
+
     // Admin stats endpoint
     Route::get('/stats', [StatsController::class, 'userStats'])->name('api.admin.stats');
 
@@ -76,4 +81,11 @@ Route::middleware(['auth:sanctum', 'throttle:100,1', 'App\\Http\\Middleware\\Ens
         'update' => 'api.admin.projects.update',
         'destroy' => 'api.admin.projects.destroy',
     ]);
+});
+
+// Ability-protected admin route
+Route::middleware(['auth:sanctum', 'throttle:100,1', 'ability:admin:ping'])->prefix('admin')->group(function () {
+    Route::get('/ability-ping', function (Request $request) {
+        return response()->json(['pong' => true, 'user' => $request->user()->email]);
+    });
 });
