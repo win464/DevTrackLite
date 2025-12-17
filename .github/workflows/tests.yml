@@ -80,6 +80,14 @@ jobs:
           echo "DB_USERNAME=root" >> .env
           echo "DB_PASSWORD=root" >> .env
 
+      - name: Wait for MySQL
+        run: |
+          while ! mysqladmin ping -h mysql -u root -proot --silent; do
+            echo 'Waiting for MySQL...'
+            sleep 1
+          done
+          echo 'MySQL is ready!'
+
       - name: Run migrations
         run: php artisan migrate --force
 
