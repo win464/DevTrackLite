@@ -170,20 +170,7 @@ docker-compose exec app php artisan --version
 
 5. **Page updates** without full reload ⚡
 
-### Why It Works:
 
-```javascript
-// vite.config.js
-server: {
-    host: '0.0.0.0',        // Vite binds to all interfaces (accessible from host)
-    hmr: {
-        host: 'localhost',   // Browser connects to localhost:5173
-    },
-    watch: {
-        usePolling: true,    // Required for Docker volume watching
-    },
-}
-```
 
 ### In Laravel Blade:
 
@@ -392,55 +379,6 @@ docker-compose up -d --build vite
 
 ---
 
-## 🎯 Common Pitfalls Avoided
-
-### ❌ **Bad Practice**: Installing Node.js in PHP container
-**Why it's bad**: Mixes concerns, bloats image, conflicts
-
-✅ **Our approach**: Separate Vite container
-
----
-
-### ❌ **Bad Practice**: Bind-mounting `node_modules` from host
-**Why it's bad**: Cross-platform issues, slow on macOS/Windows
-
-✅ **Our approach**: Named volume for `node_modules`
-
----
-
-### ❌ **Bad Practice**: Hardcoding `localhost` in configs
-**Why it's bad**: Breaks Docker networking
-
-✅ **Our approach**: Use service names (`app`, `db`, `vite`)
-
----
-
-### ❌ **Bad Practice**: Running `npm run dev` on host
-**Why it's bad**: Requires host Node.js, not reproducible
-
-✅ **Our approach**: Vite runs fully in Docker
-
----
-
-### ❌ **Bad Practice**: Single monolithic container
-**Why it's bad**: Hard to scale, debug, maintain
-
-✅ **Our approach**: Microservices architecture
-
----
-
-## 📝 Summary
-
-### What Makes This Setup Senior-Level:
-
-1. **Proper separation**: PHP and Node.js don't mix
-2. **Named volumes**: Avoids host filesystem issues
-3. **Health checks**: Prevents race conditions
-4. **Multi-stage builds**: One Dockerfile, two environments
-5. **HMR works**: Real-time updates without hacks
-6. **Production-ready**: Clear path to production
-7. **Best practices**: Follows Docker + Laravel conventions
-8. **Well documented**: You understand *why*, not just *how*
 
 ### Next Steps:
 
@@ -451,8 +389,6 @@ docker-compose up -d --build vite
 
 ---
 
-## 📚 Additional Resources
-
 - [Laravel Vite Documentation](https://laravel.com/docs/12.x/vite)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 - [Vite Configuration](https://vitejs.dev/config/)
@@ -460,4 +396,3 @@ docker-compose up -d --build vite
 
 ---
 
-**Built with ❤️ following enterprise DevOps standards**
